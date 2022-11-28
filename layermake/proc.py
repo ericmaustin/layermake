@@ -1,7 +1,6 @@
-import logging
 from typing import List, Union
 import subprocess
-from .ctx import ctx
+from .logger import logger
 
 
 def popen(cmd: List[str]) -> Union[str, int]:
@@ -15,13 +14,13 @@ def popen(cmd: List[str]) -> Union[str, int]:
 
 
 def run(cmd: List[str], return_codes: Union[List[int], int] = 0) -> int:
-    ctx().debug('executing command:', ' '.join(cmd))
+    logger().debug('executing command:', ' '.join(cmd))
 
     return_code = 0
 
     for output in popen(cmd):
         if isinstance(output, str):
-            ctx().debug(output)
+            logger().debug(output)
         else:
             return_code = output
 
@@ -29,7 +28,7 @@ def run(cmd: List[str], return_codes: Union[List[int], int] = 0) -> int:
         return_codes = [return_codes]
 
     if return_code not in return_codes:
-        ctx().fatal_error(f'{" ".join(cmd)} returned unexpected exit code: {return_code}')
+        logger().fatal_error(f'{" ".join(cmd)} returned unexpected exit code: {return_code}')
 
     return return_code
 
