@@ -8,6 +8,7 @@ py/
 build/
 #eggs
 *.egg-info/
+*.DS_Store/
 
 
 ### VirtualEnv template
