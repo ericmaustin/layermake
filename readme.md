@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/layermake.svg)](https://badge.fury.io/py/layermake)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 # LAYERMAKE
 
@@ -9,6 +10,10 @@ layermake currently supports creating python, NodeJS, and binary layers.
 Currently layermake has only been tested on Python >= 3.8
 
 ## Installation:
+Install from pypi: `pip install layermake`
+
+or install from source:
+
 git clone or download this repository and install with:
 ```sh
 pip install .
