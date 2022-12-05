@@ -9,16 +9,8 @@ from .publisher import LayerPublisher, click_common
 
 client = boto3.client('lambda')
 
-# always print title
-print("""
-  █   █▀▀█ █  █ █▀▀ █▀▀█ █▀▄▀█ █▀▀█ █ █ █▀▀
-  █   █▄▄█ █▄▄█ █▀▀ █▄▄▀ █ ▀ █ █▄▄█ █▀▄ █▀▀
-  ▀▀▀ ▀  ▀ ▄▄▄█ ▀▀▀ ▀ ▀▀ ▀   ▀ ▀  ▀ ▀ ▀ ▀▀▀                 
-                  v0.0.1
-""")
-
 NODEJS_RUNTIMES = ['4.3', '6.10', '8.10', '10.x', '12.x', '14.x', '16.x']
-PYTHON_RUNTIMES = ['3.6', '3.7', '3.8']
+PYTHON_RUNTIMES = ['3.6', '3.7', '3.8', '3.9']
 BINARY_RUNTIMES = [
     'nodejs', 'nodejs4.3', 'nodejs6.10', 'nodejs8.10',
     'nodejs10.x', 'nodejs12.x', 'nodejs14.x', 'nodejs16.x',
@@ -38,9 +30,7 @@ def cli():
 @cli.command()
 @click_common
 @click.option('-r', '--runtime',
-              type=click.Choice(NODEJS_RUNTIMES),
-              help='nodejs runtime',
-              prompt='NodeJS runtime')
+              help='nodejs runtime')
 @click.option('-m', '--manifest',
               help='nodejs manifest file (package.json)')
 @click.option('-o', '--output',
@@ -50,6 +40,8 @@ def cli():
 @click.option('--container',
               type=str,
               help='use the provided docker container to build the layer')
+@click.option('--dir',
+              help='directory containing artifacts to bundle into a layer')
 @click.argument('packages', nargs=-1)
 def nodejs(
         publisher: LayerPublisher,
@@ -57,9 +49,16 @@ def nodejs(
         manifest,
         output,
         container,
+        dir,
         packages
 ):
-    if not manifest and not packages:
+
+    while not runtime:
+        runtime = input(f'NodeJS runtime ({",".join(NODEJS_RUNTIMES)}): ').strip()
+        if runtime not in NODEJS_RUNTIMES:
+            print(f'runtime must be one of ({",".join(NODEJS_RUNTIMES)})!')
+
+    if not manifest and not packages and not dir:
         packages = input('NodeJS Packages:').strip()
 
     runtime = runtime.replace('nodejs', '')
@@ -69,6 +68,7 @@ def nodejs(
 
     publisher.runtimes = [_runtime_name]
     bundler = NodeBundler(runtime=runtime,
+                          artifact_dir=dir,
                           local_dir=output,
                           container=container,
                           manifest=manifest,
@@ -79,15 +79,15 @@ def nodejs(
 @cli.command()
 @click_common
 @click.option('-r', '--runtime',
-              type=click.Choice(PYTHON_RUNTIMES),
-              help='python runtime',
-              prompt='Python runtime')
+              help='python runtime')
 @click.option('-m', '--manifest',
               help='python manifest file (requirements.txt)')
 @click.option('-o', '--output',
               default=str(Path('./layer')),
               help='target output directory',
               show_default=True)
+@click.option('--dir',
+              help='directory containing artifacts to bundle into a layer')
 @click.option('--container',
               type=str,
               help='use the provided docker container to build the layer')
@@ -97,16 +97,23 @@ def python(
         runtime: str,
         manifest,
         output,
+        dir,
         container,
         packages
 ):
-    if not manifest and not packages:
-        packages = input('Python packages:').strip()
+    while not runtime:
+        runtime = input(f'Python runtime ({",".join(PYTHON_RUNTIMES)}): ').strip()
+        if runtime not in PYTHON_RUNTIMES:
+            print(f'runtime must be one of ({",".join(PYTHON_RUNTIMES)})!')
+
+    if not manifest and not packages and not dir:
+        packages = input('Python packages: ').strip().split(' ')
 
     runtime = runtime.replace('python', '')
     _runtime_name = f'python{runtime}'
     publisher.runtimes = [_runtime_name]
     bundler = PythonBundler(runtime=runtime,
+                            artifact_dir=dir,
                             local_dir=output,
                             container=container,
                             manifest=manifest,

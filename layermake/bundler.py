@@ -4,6 +4,7 @@ from typing import List, Optional
 from . import docker_cmd as docker
 import shutil
 from .logger import logger
+from .proc import path_copy
 
 
 class Bundler(ABC):
@@ -37,24 +38,10 @@ class Bundler(ABC):
 
         if build_artifact_path.is_dir():
             if str(build_artifact_path.resolve()) != str(local_path.resolve()):
-                with logger().status(f'copying contents of artifact dir '
-                                     f'{build_artifact_path} into {local_path}...'):
-                    try:
-                        shutil.copytree(build_artifact_path, local_path)
-                        self.build_artifact_path = local_path
-                    except Exception as e:
-                        logger().fatal_error(f'Failed copying artifact directory {build_artifact_path}'
-                                             f'into {local_path}: {str(e)}')
-                    logger().success(f'build artifact dir {build_artifact_path} was copied into {local_path}')
+                path_copy(build_artifact_path, local_path)
         else:
             if str(build_artifact_path.parents[0].resolve()) != str(local_path.resolve()):
-                with logger().status(f'copying artifact {build_artifact_path} into {local_path}...'):
-                    try:
-                        shutil.copy(build_artifact_path, local_path)
-                    except Exception as e:
-                        logger().fatal_error(f'Failed copying build artifact {build_artifact_path}'
-                                             f'into {local_path}: {str(e)}')
-                    logger().success(f'build artifact {build_artifact_path} was copied into {local_path}')
+                path_copy(build_artifact_path, local_path)
             self.build_artifact_path = local_path / build_artifact_path.name
 
     def bundle(self) -> Path:

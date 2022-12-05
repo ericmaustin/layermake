@@ -4,6 +4,7 @@ from typing import List
 from pathlib import Path
 import boto3
 from .logger import set_logger, logger
+from . import version
 
 
 class LayerPublisher:
@@ -12,6 +13,7 @@ class LayerPublisher:
                  license_file: str = None,
                  license_text: str = None,
                  description: str = None,
+                 no_publish: bool = False,
                  profile: str = None,
                  arch: List[str] = None):
 
@@ -23,6 +25,7 @@ class LayerPublisher:
         self._license_text = license_text
         self._license_file = Path(license_file) if license_file else None
         self._description = description
+        self._no_pub = no_publish
         self._arch = arch
         self.runtimes = []
 
@@ -35,6 +38,10 @@ class LayerPublisher:
         return ''
 
     def publish_layer(self, zip_file: Path, layer_type: str):
+        if self._no_pub:
+            logger().log('layer publishing skipped with "--no-publish"')
+            return
+
         if not zip_file.exists():
             raise FileNotFoundError(f'layer zip file: {zip_file} not found')
 
@@ -65,9 +72,9 @@ def click_common(f):
     """
     adds common options to all commands
     """
+
     @click.option('-n', '--name',
-                  help='layer name',
-                  prompt='Layer name')
+                  help='layer name')
     @click.option('-l', '--license',
                   help='text to include in the license field of the layer')
     @click.option('--license-file',
@@ -86,14 +93,47 @@ def click_common(f):
     @click.option('-v', '--verbose',
                   is_flag=True,
                   help='verbose output')
+    @click.option('--quiet',
+                  is_flag=True,
+                  help='quiet output. Only display errors and warnings. Turn off animations.')
+    @click.option('--no-publish',
+                  is_flag=True,
+                  help='do not publish the layer, only bundle.')
     @wraps(f)
-    def new_func(name, license, license_file, arch, profile, description, verbose, *args, **kwargs):
-        set_logger(verbose)
+    def new_func(
+            name,
+            license,
+            license_file,
+            arch,
+            profile,
+            description,
+            verbose,
+            quiet,
+            no_publish,
+            *args,
+            **kwargs
+    ):
+        # always print title
+        if not quiet:
+            print(f"""
+ █   █▀▀█ █  █ █▀▀ █▀▀█ █▀▄▀█ █▀▀█ █ █ █▀▀
+ █   █▄▄█ █▄▄█ █▀▀ █▄▄▀ █ ▀ █ █▄▄█ █▀▄ █▀▀
+ ▀▀▀ ▀  ▀ ▄▄▄█ ▀▀▀ ▀ ▀▀ ▀   ▀ ▀  ▀ ▀ ▀ ▀▀▀                 
+              v{version}
+""")
+
+        while not name and not no_publish:
+            name = input('Layer name: ').strip()
+            if not name:
+                print('Layer name cannot be empty!')
+
+        set_logger(verbose, quiet)
         publisher = LayerPublisher(name=name,
                                    license_text=license,
                                    license_file=license_file,
                                    profile=profile,
                                    arch=arch,
+                                   no_publish=no_publish,
                                    description=description)
         return f(publisher, *args, **kwargs)
 
