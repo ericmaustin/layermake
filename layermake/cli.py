@@ -72,12 +72,18 @@ def click_common(f):
     @click.option("-d", "--description", type=str, help="description of the layer")
     @click.option("-v", "--verbose", is_flag=True, help="verbose output")
     @click.option(
+        "-q",
         "--quiet",
         is_flag=True,
         help="quiet output. Only display errors and warnings. Turn off animations.",
     )
     @click.option(
         "--no-publish", is_flag=True, help="do not publish the layer, only bundle."
+    )
+    @click.option(
+        "--no-zip",
+        is_flag=True,
+        help="do not publish the layer, and do not zip the bundled layer.",
     )
     @wraps(f)
     def new_func(
@@ -90,6 +96,7 @@ def click_common(f):
         verbose,
         quiet,
         no_publish,
+        no_zip,
         *args,
         **kwargs,
     ):
@@ -97,7 +104,7 @@ def click_common(f):
         if not quiet:
             print(header)
 
-        while not name and not no_publish:
+        while not name and not no_publish and not no_zip:
             name = input("Layer name: ").strip()
             if not name:
                 print("Layer name cannot be empty!")
@@ -111,6 +118,7 @@ def click_common(f):
             arch=arch,
             no_publish=no_publish,
             description=description,
+            no_zip=no_zip,
         )
         return f(publisher, *args, **kwargs)
 
@@ -155,7 +163,7 @@ def nodejs(
         runtime = runtime + ".x"
     _runtime_name = f"nodejs{runtime}"
 
-    publisher.runtimes = [_runtime_name]
+    publisher.__runtimes = [_runtime_name]
     bundler = NodeBundler(
         runtime=runtime,
         artifact_dir=dir,
@@ -164,7 +172,7 @@ def nodejs(
         manifest=manifest,
         packages=packages,
     )
-    publisher.publish_layer(bundler.bundle(), _runtime_name)
+    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", _runtime_name)
 
 
 @cli.command()
@@ -197,7 +205,7 @@ def python(
 
     runtime = runtime.replace("python", "")
     _runtime_name = f"python{runtime}"
-    publisher.runtimes = [_runtime_name]
+    publisher.__runtimes = [_runtime_name]
     bundler = PythonBundler(
         runtime=runtime,
         artifact_dir=dir,
@@ -206,7 +214,7 @@ def python(
         manifest=manifest,
         packages=packages,
     )
-    publisher.publish_layer(bundler.bundle(), _runtime_name)
+    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", _runtime_name)
 
 
 @cli.command()
@@ -266,7 +274,7 @@ def binary(
     runtimes: List[str],
     artifact,
 ):
-    publisher.runtimes = [...[BINARY_RUNTIMES if "all" in runtimes else runtimes]]
+    publisher.__runtimes = [...[BINARY_RUNTIMES if "all" in runtimes else runtimes]]
     bundler = BinaryBundler(
         build_artifact=artifact[0],
         local_dir=output,
@@ -276,7 +284,7 @@ def binary(
         build_cmd=cmd,
         workdir=workdir,
     )
-    publisher.publish_layer(bundler.bundle(), "binary")
+    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", "binary")
 
 
 if __name__ == "__main__":

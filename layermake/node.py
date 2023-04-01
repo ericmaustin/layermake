@@ -16,20 +16,21 @@ class NodeBundler(Bundler):
     def __init__(
         self,
         runtime: str,
-        local_dir: str = "./layer",
+        local_dir: Path,
         container: str = None,
         artifact_dir: str = None,
         packages: List[str] = None,
         manifest: str = None,
     ):
-        self.manifest = manifest
-        self.packages = packages
-        self.artifact_dir = Path(artifact_dir) if artifact_dir else None
+        self.__manifest = manifest
+        self.__packages = packages
+        self.__artifact_dir = Path(artifact_dir) if artifact_dir else None
 
         if not container:
             container = NODE_ECR_TEMPLATE.substitute(runtime=runtime, version="latest")
 
         super(NodeBundler, self).__init__(
+            workdir="/opt",
             container=container,
             container_cmd="",
             local_dir=local_dir,
@@ -37,20 +38,20 @@ class NodeBundler(Bundler):
         )
 
     def pre_bundle(self):
-        node_dir = self.local_path / "nodejs"
+        node_dir = self._local_path / "nodejs"
         try:
             node_dir.mkdir(parents=True)
         except Exception as e:
             logger().fatal_error(f"failed to create directory {node_dir} Error: {e}")
 
         container_cmds = []
-        if self.artifact_dir and self.artifact_dir.exists():
-            local_src = self.local_path / "src"
+        if self.__artifact_dir and self.__artifact_dir.exists():
+            local_src = self._local_path / "src"
             node_packages = node_dir / "node_modules"
-            package_src = node_dir / self.artifact_dir.name
+            package_src = node_dir / self.__artifact_dir.name
             self.add_cleanup_path(local_src)
             # copy to package source
-            path_copy(self.artifact_dir, package_src)
+            path_copy(self.__artifact_dir, package_src)
 
             if is_package(package_src):
                 package_target = node_packages / package_src.name
@@ -65,15 +66,15 @@ class NodeBundler(Bundler):
             else:
                 path_copy(package_src, local_src)
 
-        if self.packages or self.manifest:
+        if self.__packages or self.__manifest:
             cmd = "pushd nodejs;"
-            if self.manifest:
+            if self.__manifest:
                 cmd += f" npm install;"
 
-            if self.packages:
-                cmd += " npm install --save " + " ".join(self.packages) + ";"
+            if self.__packages:
+                cmd += " npm install --save " + " ".join(self.__packages) + ";"
 
             cmd += "popd"
             container_cmds.append(cmd)
 
-        self.container_cmd = "; ".join(container_cmds)
+        self._container_cmd = "; ".join(container_cmds)

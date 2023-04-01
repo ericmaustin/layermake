@@ -5,8 +5,6 @@ from .cmd import docker_build
 from .bundler import Bundler
 from .logger import logger
 
-DEFAULT_PACKAGES = ["gzip"]
-
 # list of filenames to look for when provided a directory instead of a file as a build artifact
 _build_filenames = ["build", "install", "layer", "build-layer"]
 
@@ -21,64 +19,63 @@ class BinaryBundler(Bundler):
     """
 
     def __init__(
-            self,
-            build_artifact: str = None,
-            base_image: str = "amazonlinux:latest",
-            dockerfile: str = None,
-            local_dir: str = "./layer",
-            build_cmd: str = None,
-            yum_packages: List[str] = None,
-            workdir: str = "/opt",
-            container_output_dir: str = "/opt",
+        self,
+        build_artifact: str = None,
+        base_image: str = "amazonlinux:latest",
+        dockerfile: str = None,
+        local_dir: str = "./layer",
+        build_cmd: str = None,
+        yum_packages: List[str] = None,
+        workdir: str = "/opt",
+        container_output_dir: str = "/opt",
     ):
         super(BinaryBundler, self).__init__(
             workdir=workdir, local_dir=local_dir, build_artifact=build_artifact
         )
-        self.yum_packages = yum_packages if yum_packages else []
-        self.dockerfile = dockerfile
-        self.base_image = base_image
-        self.container_output_dir = container_output_dir
+        self.__yum_packages = yum_packages if yum_packages else []
+        self.__dockerfile = dockerfile
+        self.__base_image = base_image
+        self.__container_output_dir = container_output_dir
         if build_cmd:
-            self.container_cmd = build_cmd
+            self.__container_cmd = build_cmd
             return
 
         with logger().status("searching for build command..."):
-            if self.build_artifact_path.is_dir():
-                for p in self.build_artifact_path.iterdir():
+            if self.__build_artifact_path.is_dir():
+                for p in self.__build_artifact_path.iterdir():
                     if p.name == "make":
                         # if makefile was found, use it
-                        self.container_cmd = "make install"
+                        self.__container_cmd = "make install"
                         logger().info(f"found make file: {p}")
                         break
                     if p.name in DIR_BUILD_FILENAMES:
-                        self.container_cmd = f"chmod +x ./{p.name} " f"&& ./{p.name}"
+                        self.__container_cmd = f"chmod +x ./{p.name} " f"&& ./{p.name}"
                         logger().info(f"found build script: {p}")
                         break
 
-                if not self.container_cmd:
+                if not self.__container_cmd:
                     logger().fatal_error("no valid build file exists in artifact dir")
                 return
 
-            self.container_cmd = (
-                f"chmod +x ./{self.build_artifact_path.name} "
-                f"&& ./{self.build_artifact_path.name}"
+            self.__container_cmd = (
+                f"chmod +x ./{self.__build_artifact_path.name} "
+                f"&& ./{self.__build_artifact_path.name}"
             )
-            logger().debug(f"container command will be {self.container_cmd}")
+            logger().debug(f"container command will be {self.__container_cmd}")
 
     def pre_bundle(self):
-        packages = [x for x in self.yum_packages if x not in DEFAULT_PACKAGES]
-        packages.extend(DEFAULT_PACKAGES)
-
-        if not self.dockerfile:
+        if not self.__dockerfile:
             with logger().status("compiling docker file..."):
                 dockerfile_contents = self.compile_dockerfile(
-                    base_image=self.base_image, workdir=self.workdir, packages=packages
+                    base_image=self.__base_image,
+                    workdir=self.__workdir,
+                    packages=self.__yum_packages,
                 )
                 logger().debug(f"compiled dockerfile contents:\n {dockerfile_contents}")
                 dockerfile_path = Path(".") / f".tmp-dockerfile-{uuid.uuid4()}"
-                self.dockerfile = str(dockerfile_path.absolute())
+                self.__dockerfile = str(dockerfile_path.absolute())
                 try:
-                    with open(self.dockerfile, "w") as f:
+                    with open(self.__dockerfile, "w") as f:
                         f.write(dockerfile_contents)
                 except Exception as e:
                     logger().fatal_error(f"Failed to compile Dockerfile: {str(e)}")
@@ -86,18 +83,18 @@ class BinaryBundler(Bundler):
                 logger().success(f"compiled dockerfile saved to {dockerfile_path}")
 
         with logger().status(
-                f"building container with Dockerfile: {self.dockerfile}..."
+            f"building container with Dockerfile: {self.__dockerfile}..."
         ):
-            build_result = docker_build(self.dockerfile)
+            build_result = docker_build(self.__dockerfile)
             container_hash = build_result.stdout.decode("utf-8").strip("\n")
-            self.container = container_hash
+            self._container = container_hash
             logger().success(f"container built successfully: {container_hash}")
 
     @staticmethod
     def compile_dockerfile(
-            base_image: str = "amazonlinux:latest",
-            workdir: str = "/opt",
-            packages: List[str] = None,
+        base_image: str = "amazonlinux:latest",
+        workdir: str = "/opt",
+        packages: List[str] = None,
     ):
         if not packages:
             packages = ["gzip"]
@@ -106,8 +103,13 @@ class BinaryBundler(Bundler):
 ENV OUTPUT_BIN=/opt/bin
 ENV OUTPUT_LIB=/opt/lib
 RUN yum -y groupinstall 'Development Tools'
-RUN yum -y install {' '.join(packages)}
-RUN mkdir -p {workdir}
+"""
+        if packages:
+            dockerfile += f"RUN yum -y install {' '.join(packages)}\n"
+
+        dockerfile += f"""
+        RUN mkdir -p {workdir}
 ENTRYPOINT [""]
 """
+
         return dockerfile

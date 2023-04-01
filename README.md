@@ -37,9 +37,12 @@ All commands share the following options:
   -l, --license TEXT              text to include in the license field of the layer
   --license-file TEXT             file containing license info to include in the license field of the layer
   -a, --arch [x86_64|arm64]       architectures this layer is compatible with
-  --profile TEXT                  AWS profile to use
+  --profile TEXT                  AWS profile to use when publishing
   -d, --description TEXT          description of the layer
   -v, --verbose                   verbose output
+  -q, --quiet                     quiet output. Only display errors and warnings. Turn off animations.
+  --no-publish                    do not publish the layer, only bundle.
+  --no-zip                        do not publish the layer, and do not zip the bundled layer.
  ```
 
 ### NodeJS bundling
@@ -67,8 +70,9 @@ Options:
   --profile TEXT             AWS profile to use
   -d, --description TEXT     description of the layer
   -v, --verbose              verbose output
-  --quiet                    quiet output. Only display errors and warnings. Turn off animations.
+  -q, --quiet                    quiet output. Only display errors and warnings. Turn off animations.
   --no-publish               do not publish the layer, only bundle.
+  --no-zip                   do not publish the layer, and do not zip the bundled layer.
   -r, --runtime TEXT         nodejs runtime
   -m, --manifest TEXT        nodejs manifest file (package.json)
   -o, --output TEXT          target output directory  [default: layer]
@@ -95,8 +99,9 @@ Options:
   --profile TEXT             AWS profile to use
   -d, --description TEXT     description of the layer
   -v, --verbose              verbose output
-  --quiet                    quiet output. Only display errors and warnings. Turn off animations.
+  -q, --quiet                    quiet output. Only display errors and warnings. Turn off animations.
   --no-publish               do not publish the layer, only bundle.
+  --no-zip                   do not publish the layer, and do not zip the bundled layer.
   -r, --runtime TEXT         python runtime
   -m, --manifest TEXT        python manifest file (requirements.txt)
   -o, --output TEXT          target output directory  [default: layer]
@@ -138,6 +143,9 @@ Options:
   --profile TEXT                  AWS profile to use
   -d, --description TEXT          description of the layer
   -v, --verbose                   verbose output
+  -q, --quiet                         quiet output. Only display errors and warnings. Turn off animations.
+  --no-publish                    do not publish the layer, only bundle.
+  --no-zip                        do not publish the layer, and do not zip the bundled layer.
   --dockerfile TEXT               use the provided dockerfile for bundling
   -o, --output TEXT               target output directory  [default: layer]
   -w, --workdir TEXT              workdir used when bundling inside the container  [default: /opt]
