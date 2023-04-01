@@ -47,9 +47,15 @@ class PythonBundler(Bundler):
 
     def pre_bundle(self):
         container_cmds = []
+        local_src = self.local_path / "src"
+        try:
+            local_src.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger().fatal_error(f"failed to create directory {local_src} Error: {e}")
+
+        build_target = self.local_path / "python"
+
         if self.artifact_dir and self.artifact_dir.exists():
-            local_src = self.local_path / "src"
-            build_target = self.local_path / "python"
             package_src = local_src / self.artifact_dir.name
             self.add_cleanup_path(local_src)
             # copy to package source
@@ -72,7 +78,7 @@ class PythonBundler(Bundler):
             cmd = "pip install -t python"
 
             if self.manifest:
-                cmd += f" -r {self.manifest}"
+                cmd += f" -r {Path(self.manifest).name}"
 
             if self.packages:
                 cmd += " " + " ".join(self.packages)

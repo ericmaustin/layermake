@@ -38,9 +38,6 @@ class NodeBundler(Bundler):
 
     def pre_bundle(self):
         node_dir = self.local_path / "nodejs"
-        if node_dir.exists():
-            return
-
         try:
             node_dir.mkdir(parents=True)
         except Exception as e:
@@ -66,7 +63,7 @@ class NodeBundler(Bundler):
                 )
 
             else:
-                path_copy(package_src, node_dir)
+                path_copy(package_src, local_src)
 
         if self.packages or self.manifest:
             cmd = "pushd nodejs;"
@@ -74,9 +71,9 @@ class NodeBundler(Bundler):
                 cmd += f" npm install;"
 
             if self.packages:
-                cmd += " npm install --save " + " ".join(self.packages)
+                cmd += " npm install --save " + " ".join(self.packages) + ";"
 
-            cmd += ";popd"
+            cmd += "popd"
             container_cmds.append(cmd)
 
         self.container_cmd = "; ".join(container_cmds)

@@ -1,3 +1,4 @@
+import sys
 from typing import List
 from pathlib import Path
 import click
@@ -12,7 +13,7 @@ from functools import wraps
 
 client = boto3.client("lambda")
 
-NODEJS_RUNTIMES = ["4.3", "6.10", "8.10", "10.x", "12.x", "14.x", "16.x"]
+NODEJS_RUNTIMES = ["4.3", "6.10", "8.10", "10.x", "12.x", "14.x", "16.x", "18.x"]
 PYTHON_RUNTIMES = ["3.6", "3.7", "3.8", "3.9"]
 BINARY_RUNTIMES = [
     "nodejs",
@@ -23,6 +24,7 @@ BINARY_RUNTIMES = [
     "nodejs12.x",
     "nodejs14.x",
     "nodejs16.x",
+    "nodejs18.x",
     "java8",
     "java8.al2",
     "java11",
@@ -42,7 +44,6 @@ BINARY_RUNTIMES = [
     "ruby2.7",
     "provided",
     "provided.al2",
-    "nodejs18.x",
 ]
 
 
@@ -144,6 +145,7 @@ def nodejs(
         runtime = input(f'NodeJS runtime ({",".join(NODEJS_RUNTIMES)}): ').strip()
         if runtime not in NODEJS_RUNTIMES:
             print(f'runtime must be one of ({",".join(NODEJS_RUNTIMES)})!')
+            sys.exit(2)
 
     if not manifest and not packages and not dir:
         packages = input("NodeJS Packages:").strip()
@@ -188,6 +190,7 @@ def python(
         runtime = input(f'Python runtime ({",".join(PYTHON_RUNTIMES)}): ').strip()
         if runtime not in PYTHON_RUNTIMES:
             print(f'runtime must be one of ({",".join(PYTHON_RUNTIMES)})!')
+            sys.exit(2)
 
     if not manifest and not packages and not dir:
         packages = input("Python packages: ").strip().split(" ")

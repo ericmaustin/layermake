@@ -1,0 +1,12 @@
+{
+  "name": "nodejslayertest",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "aws-lambda": "^1.0.7"
+  }
+}

@@ -16,7 +16,7 @@ def popen(cmd: List[str], output_prepend: str = "") -> Union[str, int]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
-        encoding="utf-8"
+        encoding="utf-8",
     )
     for stdout_line in iter(proc.stdout.readline, ""):
         yield output_prepend + stdout_line
@@ -26,7 +26,9 @@ def popen(cmd: List[str], output_prepend: str = "") -> Union[str, int]:
     yield proc.wait()
 
 
-def run(cmd: List[str], return_codes: Union[List[int], int] = 0, output_prepend: str = "") -> int:
+def run(
+    cmd: List[str], return_codes: Union[List[int], int] = 0, output_prepend: str = ""
+) -> int:
     """
     Run a command and return the exit code.
     """
@@ -53,7 +55,7 @@ def run(cmd: List[str], return_codes: Union[List[int], int] = 0, output_prepend:
 
 # docker run --rm $volume_params -w "/layer" "$docker_image" /bin/bash -c "$install_command && $zip_command"
 def docker_run(
-        container: str, workdir: str, volume: str, container_cmd: Union[str, List[str]]
+    container: str, workdir: str, volume: str, container_cmd: Union[str, List[str]]
 ):
     """
     Run a command in a docker container.
@@ -77,11 +79,14 @@ def docker_cp(image_hash: str, local_dir: str):
     :param image_hash: The hash of the image to copy from.
     :param local_dir: The local directory to copy to.
     """
-    return run(["docker", "cp", f"{image_hash}:/opt/layer.zip", local_dir], output_prepend="docker cp>\t")
+    return run(
+        ["docker", "cp", f"{image_hash}:/opt/layer.zip", local_dir],
+        output_prepend="docker cp>\t",
+    )
 
 
 def docker_build(
-        dockerfile: str = "Dockerfile", ctx_dir: str = ".", quiet: bool = True
+    dockerfile: str = "Dockerfile", ctx_dir: str = ".", quiet: bool = True
 ):
     """
     Build a docker image.
@@ -130,7 +135,7 @@ def path_copy(source: Path, target: Path):
                 shutil.copytree(source, target)
             except Exception as e:
                 logger().fatal_error(
-                    f"Failed copying {source} contents " f"into {target}: {str(e)}"
+                    f"Failed copying {source} contents into {target}: {str(e)}"
                 )
             logger().success(f"{source} contents were copied into {target}")
             return
@@ -138,7 +143,8 @@ def path_copy(source: Path, target: Path):
     if source.is_file():
         with logger().status(f"copying {source} to {target}..."):
             try:
-                target.mkdir(parents=True, exist_ok=True)
+                if target.is_dir():
+                    target.mkdir(parents=True, exist_ok=True)
                 shutil.copy(source, target)
             except Exception as e:
                 logger().fatal_error(f"Failed copying {source} to {target}: {str(e)}")
