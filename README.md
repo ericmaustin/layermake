@@ -34,10 +34,8 @@ arguments are passed.
 All commands share the following options:
 ```
   -n, --name TEXT                 layer name
-  -l, --license TEXT              text to include in the license field of the
-                                  layer
-  --license-file TEXT             file containing license info to include in
-                                  the license field of the layer
+  -l, --license TEXT              text to include in the license field of the layer
+  --license-file TEXT             file containing license info to include in the license field of the layer
   -a, --arch [x86_64|arm64]       architectures this layer is compatible with
   --profile TEXT                  AWS profile to use
   -d, --description TEXT          description of the layer
@@ -62,23 +60,21 @@ layermake nodejs -n "my nodejs layer" -r 14.x -m package.json
 Usage: layermake nodejs [OPTIONS] [PACKAGES]...
 
 Options:
-  -n, --name TEXT                 layer name
-  -l, --license TEXT              text to include in the license field of the
-                                  layer
-  --license-file TEXT             file containing license info to include in
-                                  the license field of the layer
-  -a, --arch [x86_64|arm64]       architectures this layer is compatible with
-  --profile TEXT                  AWS profile to use
-  -d, --description TEXT          description of the layer
-  -v, --verbose                   verbose output
-  -r, --runtime [4.3|6.10|8.10|10.x|12.x|14.x|16.x]
-                                  nodejs runtime
-  -m, --manifest TEXT             nodejs manifest file (package.json)
-  -o, --output TEXT               target output directory  [default: layer]
-  --container TEXT                use the provided docker container to build
-                                  the layer
-  --help                          Show this message and exit.
-
+  -n, --name TEXT            layer name
+  -l, --license TEXT         text to include in the license field of the layer
+  --license-file TEXT        file containing license info to include in the license field of the layer
+  -a, --arch [x86_64|arm64]  architectures this layer is compatible with
+  --profile TEXT             AWS profile to use
+  -d, --description TEXT     description of the layer
+  -v, --verbose              verbose output
+  --quiet                    quiet output. Only display errors and warnings. Turn off animations.
+  --no-publish               do not publish the layer, only bundle.
+  -r, --runtime TEXT         nodejs runtime
+  -m, --manifest TEXT        nodejs manifest file (package.json)
+  -o, --output TEXT          target output directory  [default: layer]
+  --container TEXT           use the provided docker container to build the layer
+  --dir TEXT                 directory containing artifacts to bundle into a layer
+  --help                     Show this message and exit.
 ```
 
 ### Python bundling
@@ -92,21 +88,21 @@ All Python bundling options as displayed with `layermake python --help`
 Usage: layermake python [OPTIONS] [PACKAGES]...
 
 Options:
-  -n, --name TEXT              layer name
-  -l, --license TEXT           text to include in the license field of the
-                               layer
-  --license-file TEXT          file containing license info to include in the
-                               license field of the layer
-  -a, --arch [x86_64|arm64]    architectures this layer is compatible with
-  --profile TEXT               AWS profile to use
-  -d, --description TEXT       description of the layer
-  -v, --verbose                verbose output
-  -r, --runtime [3.6|3.7|3.8]  python runtime
-  -m, --manifest TEXT          python manifest file (requirements.txt)
-  -o, --output TEXT            target output directory  [default: layer]
-  --container TEXT             use the provided docker container to build the
-                               layer
-  --help                       Show this message and exit.
+  -n, --name TEXT            layer name
+  -l, --license TEXT         text to include in the license field of the layer
+  --license-file TEXT        file containing license info to include in the license field of the layer
+  -a, --arch [x86_64|arm64]  architectures this layer is compatible with
+  --profile TEXT             AWS profile to use
+  -d, --description TEXT     description of the layer
+  -v, --verbose              verbose output
+  --quiet                    quiet output. Only display errors and warnings. Turn off animations.
+  --no-publish               do not publish the layer, only bundle.
+  -r, --runtime TEXT         python runtime
+  -m, --manifest TEXT        python manifest file (requirements.txt)
+  -o, --output TEXT          target output directory  [default: layer]
+  --dir TEXT                 directory containing artifacts to bundle into a layer
+  --container TEXT           use the provided docker container to build the layer
+  --help                     Show this message and exit.
 ```
 
 
@@ -136,30 +132,21 @@ Usage: layermake binary [OPTIONS] [ARTIFACT]...
 
 Options:
   -n, --name TEXT                 layer name
-  -l, --license TEXT              text to include in the license field of the
-                                  layer
-  --license-file TEXT             file containing license info to include in
-                                  the license field of the layer
+  -l, --license TEXT              text to include in the license field of the layer
+  --license-file TEXT             file containing license info to include in the license field of the layer
   -a, --arch [x86_64|arm64]       architectures this layer is compatible with
   --profile TEXT                  AWS profile to use
   -d, --description TEXT          description of the layer
   -v, --verbose                   verbose output
   --dockerfile TEXT               use the provided dockerfile for bundling
   -o, --output TEXT               target output directory  [default: layer]
-  -w, --workdir TEXT              workdir used when bundling inside the
-                                  container  [default: /opt]
-  -c, --cmd TEXT                  command executed inside the container;
-                                  defaults to executing the build artifact
-                                  with /bin/bash
-  --base-image TEXT               use the provided base docker image when
-                                  compiling the Dockerfile for lambda bundling
+  -w, --workdir TEXT              workdir used when bundling inside the container  [default: /opt]
+  -c, --cmd TEXT                  command executed inside the container; defaults to executing the build artifact with /bin/bash
+  --base-image TEXT               use the provided base docker image when compiling the Dockerfile for lambda bundling
                                   [default: amazonlinux:latest]
-  -p, --packages TEXT             additional packages to install in the
-                                  container; currently only yum is supported
-  -r, --runtimes [nodejs|nodejs4.3|nodejs6.10|nodejs8.10|nodejs10.x|nodejs12.x|nodejs14.x|nodejs16.x|java8|java8.al2|java11|python2.7|python3.6|python3.7|python3.8|python3.9|dotnetcore1.0|dotnetcore2.0|dotnetcore2.1|dotnetcore3.1|dotnet6|nodejs4.3-edge|go1.x|ruby2.5|ruby2.7|provided|provided.al2|nodejs18.x|all]
-                                  compatible runtimes
+  -p, --packages TEXT             additional packages to install in the container; currently only yum is supported
+  -r, --runtimes [nodejs|nodejs4.3|nodejs6.10|nodejs8.10|nodejs10.x|nodejs12.x|nodejs14.x|nodejs16.x|java8|java8.al2|java11|python2.7|python3.6|python3.7|python3.8|python3.9|dotnetcore1.0|dotnetcore2.0|dotnetcore2.1|dotnetcore3.1|dotnet6|nodejs4.3-edge|go1.x|ruby2.5|ruby2.7|provided|provided.al2|nodejs18.x|all] compatible runtimes
   --help                          Show this message and exit.
-
 ```
 
 ## Todo:
