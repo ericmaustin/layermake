@@ -53,29 +53,16 @@ class LayerPublisher:
                 return f.read()
         return ""
 
-    def publish_layer(self, output_path: Path, zip_target: Path, layer_type: str):
+    def publish_layer(self, output_path: Path, layer_type: str):
+        if not output_path.exists():
+            raise FileNotFoundError(f"layer at: {output_path} is empty")
+
         if self.__no_zip:
-            logger().info('layer publishing and zipping skipped with "--no-zip"')
+            logger().info('layer publishing skipped because "--no-zip" was set')
             return
 
-        if not output_path.is_dir():
-            raise NotADirectoryError(f"layer output directory: {output_path} not found")
-
-        with logger().status("zipping layer"):
-            logger().info(f"zipping layer contents in: {output_path}")
-            shutil.make_archive(str(output_path), "zip", str(zip_target))
-            logger().success(f"zipped layer contents in: {output_path} to {zip_target}")
-
-        if not zip_target.exists():
-            raise FileNotFoundError(f"layer zip file: {zip_target} is empty")
-
-        # delete the output directory after zipping
-        with logger().status("removing layer source directory"):
-            logger().info(f"deleting dir: {output_path}")
-            rmtree(output_path)
-
         if self.__no_pub:
-            logger().info('layer publishing skipped with "--no-publish"')
+            logger().info('layer publishing skipped because "--no-publish" was set')
             return
 
         with logger().status("publishing layer"):
@@ -84,7 +71,7 @@ class LayerPublisher:
                     LayerName=self.name,
                     Description=self.__description
                     or f"my {layer_type} layer built with layermake",
-                    Content={"ZipFile": zip_target},
+                    Content={"ZipFile": output_path},
                     LicenseInfo=self.get_license_info(),
                     CompatibleRuntimes=self.__runtimes,
                     CompatibleArchitectures=self.__arch or ["x86_64"],

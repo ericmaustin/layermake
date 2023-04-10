@@ -171,8 +171,9 @@ def nodejs(
         container=container,
         manifest=manifest,
         packages=packages,
+        no_zip=publisher.no_zip,
     )
-    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", _runtime_name)
+    publisher.publish_layer(bundler.bundle(), _runtime_name)
 
 
 @cli.command()
@@ -213,8 +214,9 @@ def python(
         container=container,
         manifest=manifest,
         packages=packages,
+        no_zip=publisher.no_zip,
     )
-    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", _runtime_name)
+    publisher.publish_layer(bundler.bundle(), _runtime_name)
 
 
 @cli.command()
@@ -283,8 +285,9 @@ def binary(
         dockerfile=dockerfile,
         build_cmd=cmd,
         workdir=workdir,
+        no_zip=publisher.no_zip,
     )
-    publisher.publish_layer(bundler.bundle(), Path(output) / "layer.zip", "binary")
+    publisher.publish_layer(bundler.bundle(), "binary")
 
 
 if __name__ == "__main__":

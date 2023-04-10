@@ -21,6 +21,7 @@ class NodeBundler(Bundler):
         artifact_dir: str = None,
         packages: List[str] = None,
         manifest: str = None,
+        no_zip: bool = False,
     ):
         self.__manifest = manifest
         self.__packages = packages
@@ -35,6 +36,7 @@ class NodeBundler(Bundler):
             container_cmd="",
             local_dir=local_dir,
             build_artifact=manifest,
+            no_zip=no_zip,
         )
 
     def pre_bundle(self):

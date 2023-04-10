@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from pathlib import Path
 import uuid
 from .cmd import docker_build
@@ -28,11 +28,16 @@ class BinaryBundler(Bundler):
         yum_packages: List[str] = None,
         workdir: str = "/opt",
         container_output_dir: str = "/opt",
+        no_zip: bool = False,
     ):
         super(BinaryBundler, self).__init__(
-            workdir=workdir, local_dir=local_dir, build_artifact=build_artifact
+            workdir=workdir,
+            local_dir=local_dir,
+            build_artifact=build_artifact,
+            no_zip=no_zip,
         )
-        self.__yum_packages = yum_packages if yum_packages else []
+        self.__yum_packages = set(yum_packages)
+        self.__yum_packages.add("gzip")
         self.__dockerfile = dockerfile
         self.__base_image = base_image
         self.__container_output_dir = container_output_dir
@@ -94,11 +99,8 @@ class BinaryBundler(Bundler):
     def compile_dockerfile(
         base_image: str = "amazonlinux:latest",
         workdir: str = "/opt",
-        packages: List[str] = None,
+        packages: Set[str] = None,
     ):
-        if not packages:
-            packages = ["gzip"]
-
         dockerfile = f"""FROM {base_image}
 ENV OUTPUT_BIN=/opt/bin
 ENV OUTPUT_LIB=/opt/lib

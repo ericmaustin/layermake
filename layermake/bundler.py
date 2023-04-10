@@ -14,7 +14,9 @@ class Bundler(ABC):
         container: str = None,
         build_artifact: str = None,
         container_output_dir: str = None,
+        no_zip: bool = False,
     ):
+        self.__no_zip = no_zip
         self._container = container
         self._container_cmd = container_cmd
         self.__cleanup_paths: List[Path] = []
@@ -46,6 +48,8 @@ class Bundler(ABC):
             self.pre_bundle()
             with logger().status("bundling layer with Docker..."):
                 cmd_str = self._container_cmd
+                if not self.__no_zip:
+                    cmd_str += " && zip -r layer.zip *"
                 if self.__container_output_dir != self.__workdir:
                     cmd_str = f"mkdir -p {self.__container_output_dir} && " + cmd_str
                 try:
@@ -64,8 +68,17 @@ class Bundler(ABC):
                     )
                 logger().success("bundling complete!")
             self.post_bundle()
+            if not self.__no_zip:
+                # delete all files in the output dir that are not the layer itself
+                for p in self._local_path.iterdir():
+                    if p.name != "layer.zip":
+                        self.add_cleanup_path(p)
         finally:
             self.__cleanup()
+
+        if not self.__no_zip:
+            return self._local_path / "layer.zip"
+
         return self._local_path
 
     def add_cleanup_path(self, p: Path):
