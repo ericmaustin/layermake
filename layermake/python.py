@@ -2,7 +2,7 @@ from typing import List
 from string import Template
 from pathlib import Path
 from .bundler import Bundler
-from .cmd import path_copy
+from .cmd import path_copy, rmtree
 from .logger import logger
 
 PYTHON_ECR_TEMPLATE = Template("public.ecr.aws/sam/build-python${runtime}:${version}")
@@ -50,17 +50,21 @@ class PythonBundler(Bundler):
 
     def pre_bundle(self):
         container_cmds = []
-        local_src = self._local_path / "src"
-        try:
-            local_src.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            logger().fatal_error(f"failed to create directory {local_src} Error: {e}")
-
-        self.add_cleanup_path(local_src)
         build_target = self._local_path / "python"
 
         if self.__artifact_dir and self.__artifact_dir.exists():
+            local_src = self._local_path / "src"
+            try:
+                local_src.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger().fatal_error(
+                    f"failed to create directory {local_src} Error: {e}"
+                )
+
+            self.add_cleanup_path(local_src)
+
             package_src = local_src / self.__artifact_dir.name
+
             # copy to package source
             path_copy(self.__artifact_dir, package_src)
 
@@ -87,5 +91,20 @@ class PythonBundler(Bundler):
                 cmd += " " + " ".join(self.__packages)
 
             container_cmds.append(cmd)
+
+        container_cmds.extend(
+            ["find python -name '%s' -exec rm -f {} +" % p for p in ["*.pyo", "*.pyc"]]
+        )
+        container_cmds.extend(
+            [
+                "find python -name '%s' -exec rm -rf {} +" % p
+                for p in [
+                    "__pycache__",
+                    ".cache",
+                    ".mypy_cache",
+                    ".pytest_cache",
+                ]
+            ]
+        )
 
         self._container_cmd = "; ".join(container_cmds)
