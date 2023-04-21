@@ -1,5 +1,5 @@
 import sys
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 import click
 from .python import PythonBundler
@@ -191,9 +191,27 @@ def nodejs(
 @click.option(
     "--container", type=str, help="use the provided docker container to build the layer"
 )
+@click.option(
+    "--no-deps",
+    is_flag=True,
+    help="do not install dependencies. Only works with pip packages.",
+)
+@click.option(
+    "--delete-tests",
+    is_flag=True,
+    help="delete 'tests' directories",
+)
 @click.argument("packages", nargs=-1)
 def python(
-    publisher: LayerPublisher, runtime: str, manifest, output, dir, container, packages
+    publisher: LayerPublisher,
+    runtime: str,
+    manifest: Optional[str],
+    output: str,
+    dir: Optional[str],
+    container: Optional[str],
+    no_deps: bool,
+    delete_tests: bool,
+    packages: Optional[List[str]],
 ):
     while not runtime:
         runtime = input(f'Python runtime ({",".join(PYTHON_RUNTIMES)}): ').strip()
@@ -215,6 +233,8 @@ def python(
         manifest=manifest,
         packages=packages,
         no_zip=publisher.no_zip,
+        delete_tests=delete_tests,
+        no_deps=no_deps,
     )
     publisher.publish_layer(bundler.bundle(), _runtime_name)
 

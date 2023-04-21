@@ -23,16 +23,20 @@ class PythonBundler(Bundler):
     def __init__(
         self,
         runtime: str,
-        local_dir: Path,
+        local_dir: str,
         container: str = None,
         artifact_dir: str = None,
         packages: List[str] = None,
         manifest: str = None,
         no_zip: bool = False,
+        no_deps: bool = False,
+        delete_tests: bool = False,
     ):
         self.__manifest = manifest
         self.__packages = packages
         self.__artifact_dir = Path(artifact_dir) if artifact_dir else None
+        self.__no_deps = no_deps
+        self.__delete_tests = delete_tests
 
         if not container:
             container = PYTHON_ECR_TEMPLATE.substitute(
@@ -43,7 +47,7 @@ class PythonBundler(Bundler):
             workdir="/opt",
             container=container,
             container_cmd="",
-            local_dir=local_dir,
+            local_dir=Path(local_dir),
             build_artifact=manifest,
             no_zip=no_zip,
         )
@@ -84,6 +88,9 @@ class PythonBundler(Bundler):
         if self.__packages or self.__manifest:
             cmd = "pip install -t python"
 
+            if self.__no_deps:
+                cmd += " --no-deps"
+
             if self.__manifest:
                 cmd += f" -r {Path(self.__manifest).name}"
 
@@ -93,18 +100,21 @@ class PythonBundler(Bundler):
             container_cmds.append(cmd)
 
         container_cmds.extend(
-            ["find python -name '%s' -exec rm -f {} +" % p for p in ["*.pyo", "*.pyc"]]
+            ["find python -name '%s' -exec rm -f {} +" % f for f in ["*.pyo", "*.pyc"]]
         )
+
+        cleanup_dirs = [
+            "__pycache__",
+            ".cache",
+            ".mypy_cache",
+            ".pytest_cache",
+        ]
+
+        if self.__delete_tests:
+            cleanup_dirs.extend(["test", "tests", "testing"])
+
         container_cmds.extend(
-            [
-                "find python -name '%s' -exec rm -rf {} +" % p
-                for p in [
-                    "__pycache__",
-                    ".cache",
-                    ".mypy_cache",
-                    ".pytest_cache",
-                ]
-            ]
+            ["find python -name '%s' -exec rm -rf {} +" % d for d in cleanup_dirs]
         )
 
         self._container_cmd = "; ".join(container_cmds)
