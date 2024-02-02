@@ -14,7 +14,7 @@ from functools import wraps
 client = boto3.client("lambda")
 
 NODEJS_RUNTIMES = ["4.3", "6.10", "8.10", "10.x", "12.x", "14.x", "16.x", "18.x"]
-PYTHON_RUNTIMES = ["3.6", "3.7", "3.8", "3.9"]
+PYTHON_RUNTIMES = ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
 BINARY_RUNTIMES = [
     "nodejs",
     "nodejs4.3",
@@ -33,6 +33,9 @@ BINARY_RUNTIMES = [
     "python3.7",
     "python3.8",
     "python3.9",
+    "python3.10",
+    "python3.11",
+    "python3.12",
     "dotnetcore1.0",
     "dotnetcore2.0",
     "dotnetcore2.1",
